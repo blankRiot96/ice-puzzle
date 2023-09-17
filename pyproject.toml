@@ -1,0 +1,18 @@
+[project]
+name = "ice-puzzle"
+description = "An Ice Age themed puzzle game"
+version = "0.1.0"
+authors = [
+    { name = "Axis" }
+]
+dependencies = [
+    "pygame-ce>=2.2.1"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+]
+
+[tool.black]
+line-length = 89
