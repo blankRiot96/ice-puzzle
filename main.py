@@ -15,11 +15,14 @@ class Game:
     def win_init(self):
         pygame.init()
         shared.screen = pygame.display.set_mode((shared.WIN_SIZE))
+        shared.SRECT = shared.screen.get_rect()
         self.clock = pygame.time.Clock()
+        pygame.display.set_caption("Ice Age Puzzle")
 
     def update(self):
         shared.dt = self.clock.tick() / 1000.0
         shared.events = pygame.event.get()
+        shared.keys = pygame.key.get_pressed()
         for event in shared.events:
             if event.type == pygame.QUIT:
                 raise SystemExit

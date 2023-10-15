@@ -3,17 +3,19 @@ from enum import Enum, auto
 import pygame
 
 import src.shared as shared
-
-
-class MovementType(Enum):
-    FIXED = auto()
-    STATIC = auto()
-    PUSHED = auto()
-    CONTROLLED = auto()
+from src.entities import Apricorn, Box, Goal, Squirrel, Wall
 
 
 class Grid:
     LINE_COLOR = "black"
+
+    ENTITIES = {
+        1: Wall,
+        2: Squirrel,
+        3: Apricorn,
+        4: Goal,
+        8: Box,
+    }
 
     def __init__(self) -> None:
         shared.entities: list = []
@@ -24,6 +26,21 @@ class Grid:
     def update(self):
         for entity in shared.entities:
             entity.update()
+
+    def place_entity(self, row, col, entity_no):
+        entity = Grid.ENTITIES.get(entity_no)
+        if entity is None:
+            return
+        self.push_entity(entity((col, row)))
+
+    def load_levels(self, level_no: int):
+        with open(f"assets/data/level_{level_no}.txt") as f:
+            data = f.readlines()
+
+        for row, line in enumerate(data):
+            line = line.strip()
+            for col, ent in enumerate(line):
+                self.place_entity(row, col, int(ent))
 
     def draw_grid(self):
         for row in range(shared.ROWS + 1):

@@ -3,7 +3,16 @@ import abc
 import pygame
 
 import src.shared as shared
-from src.grid import MovementType
+from src.enums import MovementType
+
+
+def qload(name: str, alpha: bool) -> pygame.Surface:
+    img = pygame.image.load(f"assets/art/{name}.png")
+
+    if alpha:
+        return img.convert_alpha()
+
+    return img.convert()
 
 
 class Entity(abc.ABC):
@@ -51,6 +60,33 @@ class Entity(abc.ABC):
         shared.screen.blit(self.image, self.rect)
 
 
+class Enemy(Entity):
+    def __init__(self, cell) -> None:
+        image = qload("enemy", True)
+        super().__init__(cell, MovementType.FIXED, image)
+
+    def update(self):
+        super().update()
+
+
+class Launcher(Entity):
+    ...
+
+
+class LauncherLeft(Launcher):
+    ...
+
+
+class LauncherRight(Launcher):
+    ...
+
+
+class Wall(Entity):
+    def __init__(self, cell: tuple[int, int]) -> None:
+        image = qload("wall", False)
+        super().__init__(cell, MovementType.STATIC, image)
+
+
 class Squirrel(Entity):
     CONTROLS = {
         # Arrow keys
@@ -66,8 +102,7 @@ class Squirrel(Entity):
     }
 
     def __init__(self, cell: tuple[int, int]) -> None:
-        image = pygame.Surface(shared.TILE_SIZE)
-        image.fill((150, 75, 0))
+        image = qload("squirrel", True)
         super().__init__(cell, MovementType.CONTROLLED, image)
 
     def scan_controls(self):
@@ -76,6 +111,10 @@ class Squirrel(Entity):
         for event in shared.events:
             if event.type == pygame.KEYDOWN and event.key in Squirrel.CONTROLS:
                 self.direction = Squirrel.CONTROLS[event.key]
+
+        for control in Squirrel.CONTROLS:
+            if shared.keys[control]:
+                self.direction = Squirrel.CONTROLS[control]
 
     def scan_surroundings(self):
         for entity in shared.entities:
@@ -88,6 +127,12 @@ class Squirrel(Entity):
             ):
                 entity.direction = self.direction
 
+            if (
+                entity.cell == self.desired_cell
+                and entity.movement_type == MovementType.STATIC
+            ):
+                self.direction = (0, 0)
+
     def update(self):
         self.scan_controls()
         super().update()
@@ -96,8 +141,7 @@ class Squirrel(Entity):
 
 class Box(Entity):
     def __init__(self, cell) -> None:
-        image = pygame.Surface(shared.TILE_SIZE)
-        image.fill((150, 50, 10))
+        image = qload("box", False)
         super().__init__(cell, MovementType.PUSHED, image)
 
     def scan_surroundings(self):
@@ -110,6 +154,12 @@ class Box(Entity):
             ):
                 entity.direction = self.direction
 
+            if (
+                entity.cell == self.desired_cell
+                and entity.movement_type == MovementType.STATIC
+            ):
+                self.direction = (0, 0)
+
     def update(self):
         super().update()
         self.scan_surroundings()
@@ -117,8 +167,7 @@ class Box(Entity):
 
 class Apricorn(Entity):
     def __init__(self, cell) -> None:
-        image = pygame.Surface(shared.TILE_SIZE)
-        image.fill((230, 195, 0))
+        image = qload("apricorn", True)
         super().__init__(cell, MovementType.PUSHED, image)
 
 
@@ -133,7 +182,9 @@ class Goal(Entity):
             if entity.cell == self.cell:
                 continue
             if entity.desired_cell == self.cell and isinstance(entity, Apricorn):
-                exit()
+                shared.level_no += 1
+                if shared.level_no == shared.MAX_LEVEL:
+                    shared.victory = True
 
     def update(self):
         super().update()
