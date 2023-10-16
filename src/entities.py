@@ -1,9 +1,11 @@
 import abc
+import itertools
 
 import pygame
 
 import src.shared as shared
 from src.enums import MovementType
+from src.utils import Time
 
 
 def qload(name: str, alpha: bool) -> pygame.Surface:
@@ -50,7 +52,14 @@ class Entity(abc.ABC):
             self.cell = self.desired_cell.copy()
             self.moving = False
         else:
-            self.mvoing = True
+            self.moving = True
+
+    def snowball_collider(self) -> bool:
+        for snowball in shared.snowballs:
+            if snowball.rect.colliderect(self.rect):
+                snowball.alive = False
+                return True
+        return False
 
     def update(self):
         self.move()
@@ -61,30 +70,93 @@ class Entity(abc.ABC):
 
 
 class Enemy(Entity):
-    def __init__(self, cell) -> None:
+    def __init__(self, cell_start, cell_end) -> None:
         image = qload("enemy", True)
-        super().__init__(cell, MovementType.FIXED, image)
+        super().__init__(cell_start, MovementType.FIXED, image)
+        self.original_cell = itertools.cycle(
+            (self.cell.copy(), pygame.Vector2(cell_end))
+        )
+
+        self.cell_movement = cell_end[0] - cell_start[0]
+        self.direction = (self.cell_movement, 0)
 
     def update(self):
         super().update()
 
+        if self.pos == self.desired_pos:
+            self.cell_movement *= -1
+            self.direction = (self.cell_movement, 0)
+            self.desired_cell = next(self.original_cell)
+
+        if self.rect.colliderect(shared.player.rect):
+            shared.retry = True
+
+
+class Snowball:
+    SPEED = 500.0
+
+    def __init__(self, start_pos, direction) -> None:
+        self.image = qload("snowball", True)
+        self.rect = self.image.get_rect()
+        self.start_pos = pygame.Vector2(start_pos)
+        self.pos = self.start_pos.copy()
+        self.direction = direction
+        self.alive = True
+
+    def update(self):
+        self.pos.x += self.direction * Snowball.SPEED * shared.dt
+
+        self.rect.center = self.pos
+
+    def draw(self):
+        shared.screen.blit(self.image, self.rect)
+
 
 class Launcher(Entity):
-    ...
+    def __init__(self, cell, m_direction=-1) -> None:
+        self.m_direction = m_direction
+        image = qload("launcher", True)
+        image = pygame.transform.flip(image, m_direction < 0, False)
+        super().__init__(cell, MovementType.STATIC, image)
+        shared.snowballs = []
+        self.timer = Time(0.3)
+
+    def update(self):
+        super().update()
+
+        if self.timer.tick():
+            shared.snowballs.append(Snowball(self.rect.center, self.m_direction))
+
+        for snowball in shared.snowballs[:]:
+            snowball.update()
+
+            if not snowball.alive:
+                shared.snowballs.remove(snowball)
+
+    def draw(self):
+        super().draw()
+        for snowball in shared.snowballs:
+            snowball.draw()
 
 
 class LauncherLeft(Launcher):
-    ...
+    def __init__(self, cell) -> None:
+        super().__init__(cell, -1)
 
 
 class LauncherRight(Launcher):
-    ...
+    def __init__(self, cell) -> None:
+        super().__init__(cell, 1)
 
 
 class Wall(Entity):
     def __init__(self, cell: tuple[int, int]) -> None:
         image = qload("wall", False)
         super().__init__(cell, MovementType.STATIC, image)
+
+    def update(self):
+        super().update()
+        self.snowball_collider()
 
 
 class Squirrel(Entity):
@@ -104,6 +176,7 @@ class Squirrel(Entity):
     def __init__(self, cell: tuple[int, int]) -> None:
         image = qload("squirrel", True)
         super().__init__(cell, MovementType.CONTROLLED, image)
+        shared.player = self
 
     def scan_controls(self):
         if self.moving:
@@ -133,10 +206,15 @@ class Squirrel(Entity):
             ):
                 self.direction = (0, 0)
 
+    def snowball_collider(self):
+        if super().snowball_collider():
+            shared.retry = True
+
     def update(self):
         self.scan_controls()
         super().update()
         self.scan_surroundings()
+        self.snowball_collider()
 
 
 class Box(Entity):
@@ -163,6 +241,7 @@ class Box(Entity):
     def update(self):
         super().update()
         self.scan_surroundings()
+        self.snowball_collider()
 
 
 class Apricorn(Entity):
@@ -183,8 +262,6 @@ class Goal(Entity):
                 continue
             if entity.desired_cell == self.cell and isinstance(entity, Apricorn):
                 shared.level_no += 1
-                if shared.level_no == shared.MAX_LEVEL:
-                    shared.victory = True
 
     def update(self):
         super().update()

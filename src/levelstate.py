@@ -13,7 +13,7 @@ class LevelState:
         self.text = pygame.font.Font(None, 40).render("Pick your level!", True, "white")
         self.level_btns = [
             Button(
-                pos=(120 * i, 300),
+                pos=((120 * i) + 250, 300),
                 size=(100, 100),
                 colors={
                     "static": (51, 57, 65),
@@ -32,7 +32,6 @@ class LevelState:
 
             if btn.clicked:
                 shared.level_no = int(btn.text)
-                print(shared.level_no)
                 self.next_state = State.GAME
 
     def draw(self):

@@ -1,9 +1,16 @@
-from enum import Enum, auto
-
 import pygame
 
 import src.shared as shared
-from src.entities import Apricorn, Box, Goal, Squirrel, Wall
+from src.entities import (
+    Apricorn,
+    Box,
+    Enemy,
+    Goal,
+    LauncherLeft,
+    LauncherRight,
+    Squirrel,
+    Wall,
+)
 
 
 class Grid:
@@ -14,6 +21,9 @@ class Grid:
         2: Squirrel,
         3: Apricorn,
         4: Goal,
+        5: Enemy,
+        6: LauncherLeft,
+        7: LauncherRight,
         8: Box,
     }
 
@@ -40,7 +50,17 @@ class Grid:
         for row, line in enumerate(data):
             line = line.strip()
             for col, ent in enumerate(line):
-                self.place_entity(row, col, int(ent))
+                ent = int(ent)
+                if ent == 5:
+                    if col != line.find("5"):
+                        continue
+                    col_2 = line.rfind("5")
+
+                    entity = Enemy((col, row), (col_2, row))
+                    self.push_entity(entity)
+                    continue
+
+                self.place_entity(row, col, ent)
 
     def draw_grid(self):
         for row in range(shared.ROWS + 1):

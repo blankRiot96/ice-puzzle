@@ -5,22 +5,7 @@ import pygame
 from src import shared
 from src.button import Button
 from src.state_enums import State
-from src.utils import SinWave, render_at
-
-
-class DashBoardRenderer:
-    def __init__(self) -> None:
-        font = pygame.font.Font(None, 64)
-        self.image = font.render("Ice Age Puzzle", True, "cyan")
-        self.y = 0
-        self.wave = SinWave(0.003)
-
-    def update(self):
-        self.wave.update()
-        self.y = self.wave.val * 30
-
-    def draw(self):
-        render_at(shared.screen, self.image, "center", (0, -150 + self.y))
+from src.utils import DashBoardRenderer
 
 
 class MenuState:
@@ -38,7 +23,7 @@ class MenuState:
             text="Start",
             corner_radius=3,
         )
-        self.dashboard = DashBoardRenderer()
+        self.dashboard = DashBoardRenderer("Ice Age Puzzle", 64, "cyan", -150)
 
     def update(self):
         self.start_btn.update(pygame.mouse.get_pos())

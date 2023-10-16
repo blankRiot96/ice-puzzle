@@ -10,18 +10,26 @@ class GameState:
         self.bg_image = pygame.image.load("assets/art/background.png").convert()
 
         self.next_state: State | None = None
+
         self.grid = Grid()
         self.grid.load_levels(shared.level_no)
         self.current_level = shared.level_no
+        shared.retry = False
 
     def update(self):
         self.grid.update()
 
         for event in shared.events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                self.next_state = State.GAME
+                shared.retry = True
+
+        if shared.retry:
+            self.next_state = State.GAME
 
         if shared.level_no > self.current_level:
+            if shared.level_no > shared.MAX_LEVEL:
+                self.next_state = State.VICTORY
+                return
             self.next_state = State.GAME
 
         self.current_level = shared.level_no

@@ -6,6 +6,7 @@ from src.gamestate import GameState
 from src.levelstate import LevelState
 from src.menustate import MenuState
 from src.state_enums import State
+from src.victorystate import VictoryState
 
 
 class StateLike(t.Protocol):
@@ -24,6 +25,7 @@ class StateManager:
             State.GAME: GameState,
             State.MAIN_MENU: MenuState,
             State.LEVEL_PICKER: LevelState,
+            State.VICTORY: VictoryState,
         }
         self.state_enum = State.MAIN_MENU
         self.state_obj: StateLike = self.state_dict.get(self.state_enum)()
