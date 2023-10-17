@@ -97,6 +97,7 @@ class Snowball:
 
     def __init__(self, start_pos, direction) -> None:
         self.image = qload("snowball", True)
+        self.image = pygame.transform.scale_by(self.image, 0.5)
         self.rect = self.image.get_rect()
         self.start_pos = pygame.Vector2(start_pos)
         self.pos = self.start_pos.copy()
@@ -116,7 +117,7 @@ class Launcher(Entity):
     def __init__(self, cell, m_direction=-1) -> None:
         self.m_direction = m_direction
         image = qload("launcher", True)
-        image = pygame.transform.flip(image, m_direction < 0, False)
+        image = pygame.transform.flip(image, m_direction > 0, False)
         super().__init__(cell, MovementType.STATIC, image)
         shared.snowballs = []
         self.timer = Time(0.3)
@@ -175,12 +176,28 @@ class Squirrel(Entity):
 
     def __init__(self, cell: tuple[int, int]) -> None:
         image = qload("squirrel", True)
+        self.image_still = qload("squirrel_still", True)
+        self.image_still = pygame.transform.flip(self.image_still, True, False)
+        self.image_right = image.copy()
+        self.image_left = pygame.transform.flip(image, True, False)
         super().__init__(cell, MovementType.CONTROLLED, image)
         shared.player = self
 
+    def handle_anim(self):
+        if not self.direction[0]:
+            return
+        if self.direction[0] > 0:
+            self.image = self.image_left
+        else:
+            self.image = self.image_right
+
     def scan_controls(self):
         if self.moving:
+            self.handle_anim()
             return
+        else:
+            self.image = self.image_still
+
         for event in shared.events:
             if event.type == pygame.KEYDOWN and event.key in Squirrel.CONTROLS:
                 self.direction = Squirrel.CONTROLS[event.key]
