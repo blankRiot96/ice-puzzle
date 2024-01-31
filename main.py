@@ -1,6 +1,6 @@
 import pygame
 
-from src import shared
+import src.shared as shared
 
 
 class Game:
@@ -23,6 +23,7 @@ class Game:
         shared.dt = self.clock.tick() / 1000.0
         shared.events = pygame.event.get()
         shared.keys = pygame.key.get_pressed()
+
         for event in shared.events:
             if event.type == pygame.QUIT:
                 raise SystemExit

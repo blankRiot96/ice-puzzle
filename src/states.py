@@ -2,11 +2,11 @@ import typing as t
 
 import pygame
 
-from src.gamestate import GameState
-from src.levelstate import LevelState
-from src.menustate import MenuState
-from src.state_enums import State
-from src.victorystate import VictoryState
+from .gamestate import GameState
+from .levelstate import LevelState
+from .menustate import MenuState
+from .state_enums import State
+from .victorystate import VictoryState
 
 
 class StateLike(t.Protocol):
